@@ -1,12 +1,22 @@
 "use client";
 
 import React, { useState } from "react";
-import { FileText, Upload, Sparkles, AlertTriangle, CheckCircle, FileCheck, RefreshCw } from "lucide-react";
+import { FileText, Upload, Sparkles, AlertTriangle, CheckCircle, RefreshCw } from "lucide-react";
+
+interface ResumeReport {
+  atsScore: number;
+  grammarScore: number;
+  technicalScore: number;
+  quantificationScore: number;
+  weakPoints: string[];
+  suggestions: string[];
+  improvedBulletPreview: string;
+}
 
 export const ResumeAnalyzerView: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
-  const [report, setReport] = useState<any>(null);
+  const [report, setReport] = useState<ResumeReport | null>(null);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -152,7 +162,7 @@ export const ResumeAnalyzerView: React.FC = () => {
             <div className="p-5 rounded-xl bg-gradient-to-r from-purple-950/40 via-slate-900 to-slate-900 border border-purple-500/30 space-y-2">
               <span className="text-[10px] font-bold text-purple-400 uppercase tracking-wider">AI Bullet Point Optimization Preview</span>
               <p className="text-xs text-slate-200 font-mono bg-slate-950 p-3 rounded-lg border border-purple-500/20 leading-relaxed">
-                "{report.improvedBulletPreview}"
+                &quot;{report.improvedBulletPreview}&quot;
               </p>
             </div>
           </div>

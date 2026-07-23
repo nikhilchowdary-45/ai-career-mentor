@@ -2,12 +2,17 @@
 
 import React, { useState } from "react";
 import { MessageSquareCode, Send, Sparkles, User, RefreshCw, Trophy, Zap } from "lucide-react";
+import { UserSession } from "@/lib/types";
 
-export const InterviewCoachView: React.FC = () => {
+export const InterviewCoachView: React.FC<{ userData?: UserSession | null }> = ({ userData }) => {
+  const studentName = userData?.fullName || "Candidate";
+  const targetRole = userData?.targetRole || "AI Engineer & RAG Specialist";
+  const userStage = userData?.userRole || "Student";
+
   const [messages, setMessages] = useState<Array<{ sender: "ai" | "user"; text: string; score?: number }>>([
     {
       sender: "ai",
-      text: "Hello Nikhil! I am your AI Technical Interviewer. Today we will assess your understanding of System Design & RAG Architecture. First Question: How do you handle chunking overlap when indexing continuous text in ChromaDB to prevent context loss?"
+      text: `Hello ${studentName}! I am your AI Technical Interviewer tailored specifically for your target role: ${targetRole} (${userStage} level).\n\nFirst Customized Question: For a ${userStage} entering ${targetRole}, how do you evaluate chunking overlap strategies in ChromaDB when handling continuous technical documentation?`
     }
   ]);
   const [input, setInput] = useState("");
@@ -27,7 +32,7 @@ export const InterviewCoachView: React.FC = () => {
         ...prev,
         {
           sender: "ai",
-          text: "Excellent response! You highlighted setting an overlap ratio (e.g. 50 tokens) and using RecursiveCharacterTextSplitter to preserve sentence boundaries. Score: 9/10.\n\nFollow-up Question: How would you design a latency-budget fallback mechanism when OpenAI vector retrieval takes longer than 400ms?",
+          text: `Great explanation, ${studentName}! You accurately addressed token boundaries and vector search recall optimization. Score: 9/10.\n\nFollow-up Question tailored for ${targetRole}: How would you implement a fallback strategy in FastAPI when vector index queries exceed a 300ms latency threshold?`,
           score: 9
         }
       ]);
@@ -43,8 +48,8 @@ export const InterviewCoachView: React.FC = () => {
               <MessageSquareCode size={24} />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">AI Technical Interview Coach</h2>
-              <p className="text-xs text-slate-400">Topic: RAG Architecture & System Design • Difficulty: Senior</p>
+              <h2 className="text-xl font-bold text-white">Personalized AI Technical Interview Coach</h2>
+              <p className="text-xs text-slate-400">Candidate: {studentName} • Target: {targetRole} ({userStage})</p>
             </div>
           </div>
 
@@ -86,7 +91,7 @@ export const InterviewCoachView: React.FC = () => {
           {evaluating && (
             <div className="flex items-center gap-2 text-xs text-slate-400 italic">
               <RefreshCw size={14} className="animate-spin text-purple-400" />
-              <span>AI Technical Lead is evaluating your answer against scoring rubric...</span>
+              <span>AI Technical Lead is evaluating answer against {targetRole} rubric...</span>
             </div>
           )}
         </div>
@@ -104,7 +109,7 @@ export const InterviewCoachView: React.FC = () => {
           <button 
             onClick={handleSend}
             disabled={evaluating || !input.trim()}
-            className="px-5 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs font-semibold hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 flex items-center gap-2"
+            className="px-5 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs font-semibold hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 flex items-center gap-2 cursor-pointer"
           >
             <span>Submit</span>
             <Send size={14} />

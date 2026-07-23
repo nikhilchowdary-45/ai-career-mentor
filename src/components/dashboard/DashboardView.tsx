@@ -1,12 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Trophy, 
-  BrainCircuit, 
   Map, 
   FileCheck, 
-  Github, 
+  Code, 
   MessageSquare, 
   TrendingUp, 
   CheckCircle2, 
@@ -15,8 +14,10 @@ import {
   ArrowUpRight,
   Flame,
   Zap,
-  Target
+  Target,
+  Quote
 } from "lucide-react";
+import { UserSession } from "@/lib/types";
 import { 
   RadarChart, 
   PolarGrid, 
@@ -48,9 +49,52 @@ const progressData = [
   { week: 'Week 5', score: 84 },
 ];
 
-export const DashboardView: React.FC<{ onNavigate: (tab: string) => void }> = ({ onNavigate }) => {
+const DASHBOARD_QUOTES = [
+  { text: "Your time is limited, don't waste it living someone else's life.", author: "Steve Jobs" },
+  { text: "Quality is not an act, it is a habit.", author: "Aristotle" },
+  { text: "Believe you can and you're halfway there.", author: "Theodore Roosevelt" },
+  { text: "Action is the foundational key to all success.", author: "Pablo Picasso" },
+  { text: "Mastery requires patience, persistence, and continuous learning.", author: "AI Career Advisor" }
+];
+
+export const DashboardView: React.FC<{ userData?: UserSession | null; onNavigate: (tab: string) => void }> = ({ userData, onNavigate }) => {
+  const [quoteIndex, setQuoteIndex] = useState(0);
+
+  // Rotate quotes every 60 seconds
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setQuoteIndex((prev) => (prev + 1) % DASHBOARD_QUOTES.length);
+    }, 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const studentName = userData?.fullName || "Student Learner";
+  const userRoleStage = userData?.userRole || "Student";
+  const targetCareerRole = userData?.targetRole || "AI Engineer & RAG Specialist";
+  const dailyHoursPref = userData?.dailyHours || "2-3 Hours / Day";
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
+      {/* 60-second Rotating Inspirational Banner Above Dashboard */}
+      <div className="p-4 rounded-2xl bg-gradient-to-r from-violet-950/60 via-slate-900 to-indigo-950/60 border border-violet-500/30 flex items-center justify-between gap-4 shadow-lg">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-violet-500/10 text-violet-400 shrink-0">
+            <Quote size={20} />
+          </div>
+          <div>
+            <p className="text-xs font-semibold italic text-violet-200">
+              &quot;{DASHBOARD_QUOTES[quoteIndex].text}&quot;
+            </p>
+            <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
+              — {DASHBOARD_QUOTES[quoteIndex].author}
+            </p>
+          </div>
+        </div>
+        <span className="hidden sm:inline-block px-3 py-1 rounded-full bg-violet-500/10 text-violet-300 text-[10px] font-semibold border border-violet-500/20 shrink-0">
+          Daily Motivation
+        </span>
+      </div>
+
       {/* Welcome Banner */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-purple-900/60 via-slate-900 to-indigo-950 p-6 md:p-8 border border-purple-500/20 shadow-2xl">
         <div className="absolute top-0 right-0 -mt-8 -mr-8 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -58,27 +102,27 @@ export const DashboardView: React.FC<{ onNavigate: (tab: string) => void }> = ({
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-300 text-xs font-medium">
               <Sparkles size={14} className="text-purple-400" />
-              <span>Phase 3 Real-time AI Career Assistant Active</span>
+              <span>Role Stage: {userRoleStage}</span>
             </div>
             <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
-              Welcome back, Nikhil! 🚀
+              Welcome back, {studentName}! 🚀
             </h1>
             <p className="text-sm text-slate-300 max-w-2xl leading-relaxed">
-              Your overall readiness for <span className="text-purple-300 font-semibold">Senior AI Engineer</span> is at <span className="text-emerald-400 font-bold">84%</span>. Complete today's vector search optimization task to hit 86%.
+              Your overall readiness for <span className="text-purple-300 font-semibold">{targetCareerRole}</span> is at <span className="text-emerald-400 font-bold">84%</span>. Recommended pace: <span className="text-cyan-300 font-semibold">{dailyHoursPref}</span>.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
             <button 
               onClick={() => onNavigate("interview")}
-              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-medium text-xs shadow-lg shadow-purple-600/30 flex items-center gap-2 transition-all"
+              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-medium text-xs shadow-lg shadow-purple-600/30 flex items-center gap-2 transition-all cursor-pointer"
             >
               <MessageSquare size={16} />
               <span>Start AI Mock Interview</span>
             </button>
             <button 
               onClick={() => onNavigate("roadmap")}
-              className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs border border-slate-700 flex items-center gap-2 transition-all"
+              className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs border border-slate-700 flex items-center gap-2 transition-all cursor-pointer"
             >
               <Map size={16} />
               <span>View Active Roadmap</span>
@@ -123,7 +167,7 @@ export const DashboardView: React.FC<{ onNavigate: (tab: string) => void }> = ({
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-xs font-medium">GitHub Portfolio Score</span>
             <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400">
-              <Github size={18} />
+              <Code size={18} />
             </div>
           </div>
           <div>
@@ -158,13 +202,13 @@ export const DashboardView: React.FC<{ onNavigate: (tab: string) => void }> = ({
             <div>
               <h3 className="text-sm font-semibold text-white flex items-center gap-2">
                 <Target size={16} className="text-purple-400" />
-                Target Skill Benchmark (AI Engineer)
+                Target Skill Benchmark ({targetCareerRole.split('&')[0]})
               </h3>
               <p className="text-xs text-slate-400">Current skill ratings vs industry threshold</p>
             </div>
             <button 
               onClick={() => onNavigate("skillgap")}
-              className="text-xs text-purple-400 hover:text-purple-300 font-medium flex items-center gap-1"
+              className="text-xs text-purple-400 hover:text-purple-300 font-medium flex items-center gap-1 cursor-pointer"
             >
               Analyze Gaps <ArrowUpRight size={14} />
             </button>
@@ -175,7 +219,7 @@ export const DashboardView: React.FC<{ onNavigate: (tab: string) => void }> = ({
                 <PolarGrid stroke="#374151" />
                 <PolarAngleAxis dataKey="subject" stroke="#9ca3af" tick={{ fontSize: 11 }} />
                 <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="#4b5563" />
-                <Radar name="Nikhil" dataKey="A" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.4} />
+                <Radar name={studentName} dataKey="A" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.4} />
               </RadarChart>
             </ResponsiveContainer>
           </div>
@@ -222,21 +266,21 @@ export const DashboardView: React.FC<{ onNavigate: (tab: string) => void }> = ({
           <div className="flex items-center justify-between border-b border-slate-800 pb-3">
             <h3 className="text-sm font-semibold text-white flex items-center gap-2">
               <Clock size={16} className="text-amber-400" />
-              Today's Personalized Learning Plan
+              Today&apos;s Personalized Study Tasks ({dailyHoursPref})
             </h3>
             <button 
               onClick={() => onNavigate("planner")}
-              className="text-xs text-purple-400 hover:text-purple-300 font-medium"
+              className="text-xs text-purple-400 hover:text-purple-300 font-medium cursor-pointer"
             >
-              Manage Full Schedule
+              Manage Schedule
             </button>
           </div>
 
           <div className="space-y-3">
             {[
-              { id: 1, title: "Optimize RAG Vector Chunking Strategy in ChromaDB", time: "45 mins", category: "AI Engineering", completed: true },
+              { id: 1, title: "Watch YouTube: FastAPI Async & SQLAlchemy 2.0 Masterclass", time: "45 mins", category: "Course Video", completed: true },
               { id: 2, title: "Review 5 Behavioral Interview STAR Framework Answers", time: "30 mins", category: "Interview Prep", completed: false },
-              { id: 3, title: "Update GitHub Repository README for StartupForge AI", time: "25 mins", category: "Portfolio", completed: false },
+              { id: 3, title: "Optimize ChromaDB Vector Chunking in Python", time: "35 mins", category: "Hands-on Code", completed: false },
             ].map(task => (
               <div 
                 key={task.id}
@@ -268,12 +312,12 @@ export const DashboardView: React.FC<{ onNavigate: (tab: string) => void }> = ({
             <span>AI Mentor Advisory</span>
           </div>
           <p className="text-xs text-slate-300 leading-relaxed italic">
-            "Nikhil, your technical score in FastAPI and Python is strong. To reach top 5% candidate standing for Senior AI roles, focus on system design for multi-tenant vector databases and latency budget optimization."
+            &quot;{studentName}, as a {userRoleStage}, your target for {targetCareerRole} looks strong. Based on your preference for {userData?.studyPreference || "Hybrid learning"}, focus on building 2 vector search portfolio projects this month.&quot;
           </p>
           <div className="pt-2">
             <button 
               onClick={() => onNavigate("chatbot")}
-              className="w-full py-2.5 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 text-xs font-medium transition-all"
+              className="w-full py-2.5 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 text-xs font-medium transition-all cursor-pointer"
             >
               Ask AI Mentor a Question →
             </button>

@@ -1,13 +1,20 @@
 "use client";
 
 import React, { useState } from "react";
-import { Bot, Send, Sparkles, User, RefreshCw, BookOpen, Search } from "lucide-react";
+import { Bot, Send, User, RefreshCw, BookOpen, Search } from "lucide-react";
+import { UserSession } from "@/lib/types";
 
-export const ChatbotView: React.FC = () => {
+interface ChatbotViewProps {
+  userData?: UserSession | null;
+}
+
+export const ChatbotView: React.FC<ChatbotViewProps> = ({ userData }) => {
+  const studentName = userData?.fullName || "Learner";
+
   const [messages, setMessages] = useState<Array<{ sender: "bot" | "user"; text: string; sources?: string[] }>>([
     {
       sender: "bot",
-      text: "Greetings Nikhil! I am your RAG-powered AI Career Mentor. I have full context of your profile, active roadmaps, and latest industry benchmark data. How can I assist your career progression today?",
+      text: `Greetings ${studentName}! I am your RAG-powered AI Career Mentor. I have full context of your profile, active roadmaps, and latest industry benchmark data. How can I assist your career progression today?`,
       sources: ["Vector Database - ChromaDB", "Curated AI Career Taxonomy 2026"]
     }
   ]);
