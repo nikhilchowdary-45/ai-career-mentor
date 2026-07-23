@@ -154,6 +154,7 @@ export const NavbarSidebar: React.FC<NavbarSidebarProps> = ({ userData, onOpenAu
                       try {
                         localStorage.removeItem("ai_career_mentor_db_users");
                         localStorage.removeItem("ai_career_mentor_active_user");
+                        localStorage.removeItem("ai_career_mentor_jwt_token");
                         window.location.reload();
                       } catch (err) {
                         console.warn("Failed to clear local database", err);

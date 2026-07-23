@@ -10,6 +10,7 @@ import { InterviewCoachView } from "@/components/modules/InterviewCoachView";
 import { ChatbotView } from "@/components/modules/ChatbotView";
 import { AuthOnboardingModal } from "@/components/auth/AuthOnboardingModal";
 import { UserSession } from "@/lib/types";
+import { getAuthToken, clearAuthToken, apiFetch } from "@/lib/api";
 
 export default function Home() {
   const [isHydrated, setIsHydrated] = useState<boolean>(false);
@@ -17,28 +18,33 @@ export default function Home() {
   const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
   const [modalMode, setModalMode] = useState<"login" | "signup" | "forgot" | "edit_profile">("login");
 
-  // Load saved active user session from LocalStorage on initial load
+  // Load active user session from backend API on initial load
   useEffect(() => {
-    let initialUser: UserSession | null = null;
     let shouldShowAuth = true;
 
-    try {
-      const savedUserJson = localStorage.getItem("ai_career_mentor_active_user");
-      if (savedUserJson) {
-        initialUser = JSON.parse(savedUserJson);
-        shouldShowAuth = false;
+    const fetchSession = async () => {
+      const token = getAuthToken();
+      if (token) {
+        try {
+          const userSession = await apiFetch<UserSession>("/auth/me");
+          setUser(userSession);
+          shouldShowAuth = false;
+        } catch (e) {
+          console.warn("Session token validation failed, clearing token", e);
+          clearAuthToken();
+          try {
+            localStorage.removeItem("ai_career_mentor_active_user");
+          } catch {}
+        }
       }
-    } catch (e) {
-      console.warn("Failed to read user session from LocalStorage", e);
-    }
 
-    // Defer state updates asynchronously to avoid synchronous setState cascading renders in React 19
-    const timer = setTimeout(() => {
-      if (initialUser) {
-        setUser(initialUser);
-      }
+      // Defer state updates asynchronously to avoid synchronous setState cascading renders in React 19
       setShowAuthModal(shouldShowAuth);
       setIsHydrated(true);
+    };
+
+    const timer = setTimeout(() => {
+      fetchSession();
     }, 0);
 
     return () => clearTimeout(timer);
@@ -55,6 +61,7 @@ export default function Home() {
     } catch (e) {
       console.warn("Failed to remove user session from LocalStorage", e);
     }
+    clearAuthToken();
     setUser(null);
     setModalMode("login");
     setShowAuthModal(true);

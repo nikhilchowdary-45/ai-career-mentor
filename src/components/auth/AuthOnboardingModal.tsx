@@ -25,6 +25,7 @@ import {
   Edit3
 } from "lucide-react";
 import { UserSession } from "@/lib/types";
+import { setAuthToken, apiFetch } from "@/lib/api";
 
 interface AuthModalProps {
   initialMode?: "login" | "signup" | "forgot" | "edit_profile";
@@ -78,8 +79,7 @@ export const AuthOnboardingModal: React.FC<AuthModalProps> = ({
   const [studyPreference, setStudyPreference] = useState<"Free YouTube & Open Source" | "Platform Paid Courses" | "Hybrid (Recommended)">(userData?.studyPreference || "Hybrid (Recommended)");
   const [dailyHours, setDailyHours] = useState(userData?.dailyHours || "2-3 Hours / Day");
   const [studyTimeOfDay, setStudyTimeOfDay] = useState(userData?.studyTimeOfDay || "Night Owl (8 PM - 12 AM)");
-
-
+  const [loading, setLoading] = useState(false);
 
   // 60-Second Rotating Quote
   const [quoteIdx, setQuoteIdx] = useState(0);
@@ -109,23 +109,47 @@ export const AuthOnboardingModal: React.FC<AuthModalProps> = ({
     return `https://linkedin.com/in/${clean.replace(/[^a-zA-Z0-9-]/g, '')}`;
   };
 
-  const handleSendRegistrationOtp = () => {
+  const handleSendRegistrationOtp = async () => {
     if (!validateEmailFormat(email)) {
       setErrorMsg("Please enter a valid email address (e.g. name@domain.com)");
       return;
     }
     setErrorMsg(null);
-    const mockOtp = Math.floor(100000 + Math.random() * 900000).toString();
-    setGeneratedOtp(mockOtp);
-    setOtpSent(true);
+    setLoading(true);
+    try {
+      await apiFetch<{ message: string }>("/auth/send-otp", {
+        method: "POST",
+        body: JSON.stringify({ email, purpose: "registration" })
+      });
+      setGeneratedOtp("Sent");
+      setOtpSent(true);
+    } catch (err) {
+      const error = err as Error;
+      setErrorMsg(error.message || "Failed to send registration verification code.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleVerifyRegistrationOtp = () => {
-    if (enteredOtp.trim() === generatedOtp || enteredOtp.trim() === "123456") {
+  const handleVerifyRegistrationOtp = async () => {
+    if (!enteredOtp.trim()) {
+      setErrorMsg("Please enter the verification code.");
+      return;
+    }
+    setErrorMsg(null);
+    setLoading(true);
+    try {
+      await apiFetch<{ message: string }>("/auth/verify-otp", {
+        method: "POST",
+        body: JSON.stringify({ email, code: enteredOtp.trim(), purpose: "registration" })
+      });
       setIsEmailVerified(true);
       setErrorMsg(null);
-    } else {
-      setErrorMsg("Invalid OTP code. Please check your verification email.");
+    } catch (err) {
+      const error = err as Error;
+      setErrorMsg(error.message || "Invalid or expired verification code.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -152,57 +176,53 @@ export const AuthOnboardingModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  const handleSendOtpOrLink = (e: React.FormEvent) => {
+  const handleSendOtpOrLink = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateEmailFormat(email)) {
       setErrorMsg("Please enter a valid email address.");
       return;
     }
     setErrorMsg(null);
-    if (forgotMethod === "otp") {
-      const mockOtp = Math.floor(1000 + Math.random() * 9000).toString();
-      setForgotOtpCode(mockOtp);
+    setLoading(true);
+    try {
+      await apiFetch<{ message: string }>("/auth/send-otp", {
+        method: "POST",
+        body: JSON.stringify({ email, purpose: "password_reset" })
+      });
+      setForgotOtpCode("Sent");
       setForgotOtpSent(true);
-    } else {
-      setForgotOtpSent(true);
-      setTimeout(() => {
-        setResetSuccess(true);
-      }, 1200);
+    } catch (err) {
+      const error = err as Error;
+      setErrorMsg(error.message || "Failed to send verification code. Try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleVerifyResetOtp = (e: React.FormEvent) => {
+  const handleVerifyResetOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (enteredResetOtp.trim() === forgotOtpCode || enteredResetOtp.trim() === "1234") {
-      const cleanEmail = email.toLowerCase().trim();
-      let storedUsersJson: string | null = null;
-      try {
-        storedUsersJson = localStorage.getItem("ai_career_mentor_db_users");
-      } catch (err) {
-        console.warn("Could not read LocalStorage", err);
-      }
-      const usersDb: Record<string, UserSession> = storedUsersJson ? JSON.parse(storedUsersJson) : {};
-      
-      if (usersDb[cleanEmail]) {
-        usersDb[cleanEmail].password = "password123";
-        safeSaveToStorage("ai_career_mentor_db_users", usersDb);
-      }
+    if (!enteredResetOtp.trim()) {
+      setErrorMsg("Please enter the verification code.");
+      return;
+    }
+    setErrorMsg(null);
+    setLoading(true);
+    try {
+      await apiFetch<{ message: string }>("/auth/reset-password", {
+        method: "POST",
+        body: JSON.stringify({ email, code: enteredResetOtp.trim(), new_password: "password123" })
+      });
       setResetSuccess(true);
       setErrorMsg(null);
-    } else {
-      setErrorMsg("Invalid OTP code. Please enter the correct code.");
-    }
-  };
-
-  const safeSaveToStorage = (key: string, data: unknown) => {
-    try {
-      localStorage.setItem(key, JSON.stringify(data));
     } catch (err) {
-      console.warn(`LocalStorage write for ${key} failed, continuing session in memory`, err);
+      const error = err as Error;
+      setErrorMsg(error.message || "Invalid or expired verification code.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
 
@@ -212,109 +232,89 @@ export const AuthOnboardingModal: React.FC<AuthModalProps> = ({
       return;
     }
 
-    let storedUsersJson: string | null = null;
-    try {
-      storedUsersJson = localStorage.getItem("ai_career_mentor_db_users");
-    } catch (e) {
-      console.warn("Could not read LocalStorage", e);
-    }
-    const usersDb: Record<string, UserSession> = storedUsersJson ? JSON.parse(storedUsersJson) : {};
-
     const formattedGithub = formatGithubUsername(githubId);
     const formattedLinkedin = formatLinkedinUrl(linkedinUrl);
 
-    if (activeTab === "login") {
-      if (usersDb[cleanEmail]) {
-        const existingUser = usersDb[cleanEmail];
-        if (!existingUser.password || existingUser.password === password || password === "") {
-          safeSaveToStorage("ai_career_mentor_active_user", existingUser);
-          onLoginSuccess(existingUser);
+    setLoading(true);
+    try {
+      if (activeTab === "login") {
+        const response = await apiFetch<{ access_token: string; user: UserSession }>("/auth/login", {
+          method: "POST",
+          body: JSON.stringify({ email: cleanEmail, password })
+        });
+        setAuthToken(response.access_token);
+        try {
+          localStorage.setItem("ai_career_mentor_active_user", JSON.stringify(response.user));
+        } catch {}
+        onLoginSuccess(response.user);
+      } else if (activeTab === "signup") {
+        if (signupStep === 1) {
+          if (!fullName.trim()) {
+            setErrorMsg("Please enter your full name.");
+            setLoading(false);
+            return;
+          }
+          if (!isEmailVerified) {
+            setErrorMsg("Please send and verify the email OTP code before continuing.");
+            setLoading(false);
+            return;
+          }
+          setSignupStep(2);
         } else {
-          setErrorMsg(`Incorrect password for ${cleanEmail}. Please re-enter your registered password.`);
+          const response = await apiFetch<{ access_token: string; user: UserSession }>("/auth/signup", {
+            method: "POST",
+            body: JSON.stringify({
+              full_name: fullName.trim(),
+              email: cleanEmail,
+              password,
+              github_id: formattedGithub || fullName.toLowerCase().replace(/\s+/g, ""),
+              linkedin_url: formattedLinkedin,
+              profile_photo_url: profilePhotoUrl,
+              user_role: userRole,
+              target_role: targetRole,
+              study_preference: studyPreference,
+              daily_hours: dailyHours,
+              study_time_of_day: studyTimeOfDay
+            })
+          });
+          setAuthToken(response.access_token);
+          try {
+            localStorage.setItem("ai_career_mentor_active_user", JSON.stringify(response.user));
+          } catch {}
+          onLoginSuccess(response.user);
         }
-      } else {
-        const rawPrefix = cleanEmail.split('@')[0] || "Learner";
-        const cleanDisplayName = fullName.trim() || rawPrefix
-          .replace(/[._-]/g, ' ')
-          .replace(/\b\w/g, (char: string) => char.toUpperCase());
-
-        const newUserObj = {
-          fullName: cleanDisplayName,
-          email: cleanEmail,
-          password: password || "password123",
-          githubId: formattedGithub || rawPrefix,
-          linkedinUrl: formattedLinkedin || `https://linkedin.com/in/${rawPrefix}`,
-          profilePhotoUrl,
-          userRole,
-          targetRole,
-          studyPreference,
-          dailyHours,
-          studyTimeOfDay,
-          registeredAt: new Date().toISOString()
-        };
-        usersDb[cleanEmail] = newUserObj;
-        safeSaveToStorage("ai_career_mentor_db_users", usersDb);
-        safeSaveToStorage("ai_career_mentor_active_user", newUserObj);
-        onLoginSuccess(newUserObj);
-      }
-    } else if (activeTab === "signup") {
-      if (signupStep === 1) {
-        if (!fullName.trim()) {
-          setErrorMsg("Please enter your full name.");
-          return;
-        }
+      } else if (activeTab === "edit_profile") {
         if (!isEmailVerified) {
-          setErrorMsg("Please send and verify the email OTP code before continuing.");
+          setErrorMsg("Safety Security: Please send & verify email OTP before updating your profile information.");
+          setLoading(false);
           return;
         }
-        setSignupStep(2);
-      } else {
-        const newUserObj = {
-          fullName: fullName.trim(),
-          email: cleanEmail,
-          password,
-          githubId: formattedGithub || fullName.toLowerCase().replace(/\s+/g, ''),
-          linkedinUrl: formattedLinkedin,
-          profilePhotoUrl,
-          userRole,
-          targetRole,
-          studyPreference,
-          dailyHours,
-          studyTimeOfDay,
-          registeredAt: new Date().toISOString()
-        };
 
-        usersDb[cleanEmail] = newUserObj;
-        safeSaveToStorage("ai_career_mentor_db_users", usersDb);
-        safeSaveToStorage("ai_career_mentor_active_user", newUserObj);
-        onLoginSuccess(newUserObj);
+        const response = await apiFetch<UserSession>("/auth/profile", {
+          method: "PUT",
+          body: JSON.stringify({
+            full_name: fullName.trim(),
+            github_id: formattedGithub || fullName.toLowerCase().replace(/\s+/g, ""),
+            linkedin_url: formattedLinkedin,
+            profile_photo_url: profilePhotoUrl,
+            user_role: userRole,
+            target_role: targetRole,
+            study_preference: studyPreference,
+            daily_hours: dailyHours,
+            study_time_of_day: studyTimeOfDay,
+            password: password || undefined
+          })
+        });
+        try {
+          localStorage.setItem("ai_career_mentor_active_user", JSON.stringify(response));
+        } catch {}
+        onLoginSuccess(response);
       }
-    } else if (activeTab === "edit_profile") {
-      // Require Email OTP Verification to confirm profile edits
-      if (!isEmailVerified) {
-        setErrorMsg("Safety Security: Please send & verify email OTP before updating your profile information.");
-        return;
-      }
-
-      const updatedUserObj = {
-        fullName: fullName.trim(),
-        email: cleanEmail,
-        password,
-        githubId: formattedGithub || fullName.toLowerCase().replace(/\s+/g, ''),
-        linkedinUrl: formattedLinkedin,
-        profilePhotoUrl,
-        userRole,
-        targetRole,
-        studyPreference,
-        dailyHours,
-        studyTimeOfDay,
-        updatedAt: new Date().toISOString()
-      };
-
-      usersDb[cleanEmail] = updatedUserObj;
-      safeSaveToStorage("ai_career_mentor_db_users", usersDb);
-      safeSaveToStorage("ai_career_mentor_active_user", updatedUserObj);
-      onLoginSuccess(updatedUserObj);
+    } catch (err) {
+      const error = err as Error;
+      setErrorMsg(error.message || "Authentication action failed. Please verify credentials.");
+    } finally {
+      setLoading(false);
     }
   };
 
