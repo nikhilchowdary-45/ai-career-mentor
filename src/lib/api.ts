@@ -1,4 +1,15 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+const getApiBaseUrl = () => {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  if (typeof window !== "undefined") {
+    const hostname = window.location.hostname;
+    return `http://${hostname}:8000/api`;
+  }
+  return "http://localhost:8000/api";
+};
+
+export const API_BASE_URL = getApiBaseUrl();
 
 export function getAuthToken(): string | null {
   if (typeof window === "undefined") return null;
