@@ -38,6 +38,34 @@ export function clearAuthToken(): void {
   }
 }
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+export function camelCaseKeys(obj: any): any {
+  if (Array.isArray(obj)) {
+    return obj.map(camelCaseKeys);
+  } else if (obj !== null && typeof obj === 'object') {
+    return Object.keys(obj).reduce((result, key) => {
+      const camelKey = key.replace(/_([a-z])/g, (_, char) => char.toUpperCase());
+      result[camelKey] = camelCaseKeys(obj[key]);
+      return result;
+    }, {} as any);
+  }
+  return obj;
+}
+
+export function snakeCaseKeys(obj: any): any {
+  if (Array.isArray(obj)) {
+    return obj.map(snakeCaseKeys);
+  } else if (obj !== null && typeof obj === 'object') {
+    return Object.keys(obj).reduce((result, key) => {
+      const snakeKey = key.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+      result[snakeKey] = snakeCaseKeys(obj[key]);
+      return result;
+    }, {} as any);
+  }
+  return obj;
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
 export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getAuthToken();
   
@@ -47,6 +75,16 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
   }
   if (!headers.has("Content-Type") && !(options.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
+  }
+
+  // Convert payload body to snake_case if it is a JSON string
+  if (options.body && typeof options.body === "string") {
+    try {
+      const parsed = JSON.parse(options.body);
+      options.body = JSON.stringify(snakeCaseKeys(parsed));
+    } catch {
+      // Body is not JSON
+    }
   }
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -67,7 +105,6 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
       clearAuthToken();
       if (typeof window !== "undefined") {
         localStorage.removeItem("ai_career_mentor_active_user");
-        // Optionally trigger a reload or redirect
       }
     }
     
@@ -79,5 +116,6 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
     return {} as T;
   }
 
-  return response.json() as Promise<T>;
+  const rawJson = await response.json();
+  return camelCaseKeys(rawJson) as T;
 }

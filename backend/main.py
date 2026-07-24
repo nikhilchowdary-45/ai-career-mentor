@@ -15,17 +15,10 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Configure CORS to permit local network requests from frontend port 3000
-origins = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://192.168.1.6:3000",
-    "https://localhost:3000",
-]
-
+# Configure CORS to permit local network requests from any port during development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origin_regex="https?://.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

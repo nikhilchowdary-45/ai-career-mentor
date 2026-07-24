@@ -49,7 +49,12 @@ def send_otp(payload: schemas.SendOTPRequest, db: Session = Depends(get_db)):
     db.commit()
     
     # Send transaction email
-    email_service.send_otp_email(payload.email, code, payload.purpose)
+    success = email_service.send_otp_email(payload.email, code, payload.purpose)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to dispatch verification email. Please verify backend SMTP/Resend API settings."
+        )
     
     return {"message": f"Verification code successfully generated and dispatched to {payload.email}."}
 

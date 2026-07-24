@@ -2,71 +2,77 @@
 
 @layer base {
   :root {
-    --background: 224 71% 4%;
-    --foreground: 213 31% 91%;
+    /* Main Backgrounds & Foreground */
+    --background: 0 0% 0%; /* #000000 (Pure Black) */
+    --foreground: 240 5.2% 83.9%; /* #D4D4D8 (zinc-300) */
 
-    --card: 224 71% 7%;
-    --card-foreground: 213 31% 91%;
+    /* Cards */
+    --card: 0 0% 7.1%; /* #121212 */
+    --card-foreground: 0 0% 100%; /* #FFFFFF */
 
-    --popover: 224 71% 4%;
-    --popover-foreground: 215 20.2% 65.1%;
+    /* Popover */
+    --popover: 0 0% 3.9%; /* #0A0A0A */
+    --popover-foreground: 240 5% 84%;
 
-    --primary: 263 70% 50%;
-    --primary-foreground: 210 40% 98%;
+    /* Brand/Accent Colors */
+    --primary: 258.8 91.8% 66.1%; /* #8B5CF6 (Purple Accent) */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 222.2 47.4% 11.2%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 0 0% 11.8%; /* #1E1E1E */
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 223 47% 11%;
-    --muted-foreground: 215.4 16.3% 56.9%;
+    --muted: 0 0% 6.7%; /* #111111 */
+    --muted-foreground: 240 5% 64.9%; /* #A1A1AA */
 
-    --accent: 216 34% 17%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 329.7 82% 58.4%; /* #EC4899 (Pink Glow Accent) */
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 63% 31%;
+    --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 216 34% 17%;
-    --input: 216 34% 17%;
-    --ring: 263 70% 50%;
+    /* Borders & Inputs */
+    --border: 0 0% 14.9%; /* #262626 */
+    --input: 0 0% 9.4%; /* #181818 */
+    --ring: 258.8 91.8% 66.1%;
 
     --radius: 0.75rem;
   }
 }
 
 body {
-  background-color: #030712;
-  color: #f3f4f6;
+  background-color: #000000;
+  color: #D4D4D8;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   overflow-x: hidden;
 }
 
-/* Glassmorphism Styles */
+/* Glassmorphism Styles (4% white overlay) */
 .glass-panel {
-  background: rgba(17, 24, 39, 0.65);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid #262626;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
 }
 
 .glass-card {
-  background: rgba(31, 41, 55, 0.4);
+  background: rgba(255, 255, 255, 0.04);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
 }
 
 .glass-input {
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #f9fafb;
+  background: #181818;
+  border: 1px solid #2A2A2A;
+  color: #FFFFFF;
 }
 
 .glass-input:focus {
-  border-color: #8b5cf6;
+  border-color: #8B5CF6;
   outline: none;
-  box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.25);
 }
 
 /* Custom Scrollbar */
@@ -75,17 +81,37 @@ body {
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #090d16;
+  background: #111111;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1f2937;
+  background: #404040;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #374151;
+  background: #8B5CF6;
 }
 
-/* Custom Glow Animations */
+/* Shadows */
+.shadow-sm {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+.shadow-md {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+.shadow-lg {
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+}
+
+/* Glow Effects */
+.glow-purple {
+  box-shadow: 0 0 40px rgba(139, 92, 246, 0.40);
+}
+
+.glow-cyan {
+  box-shadow: 0 0 40px rgba(236, 72, 153, 0.30);
+}
+
+/* Custom Glow Keyframes */
 @keyframes pulseGlow {
   0%, 100% {
     opacity: 0.4;
@@ -95,12 +121,4 @@ body {
     opacity: 0.8;
     transform: scale(1.05);
   }
-}
-
-.glow-purple {
-  box-shadow: 0 0 25px rgba(139, 92, 246, 0.25);
-}
-
-.glow-cyan {
-  box-shadow: 0 0 25px rgba(6, 182, 212, 0.25);
 }

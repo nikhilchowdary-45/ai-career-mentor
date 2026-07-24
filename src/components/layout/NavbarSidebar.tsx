@@ -20,8 +20,7 @@ import {
   LogOut,
   Menu,
   X,
-  Eye,
-  Trash2
+  Eye
 } from "lucide-react";
 import { Background3DCanvas } from "@/components/canvas/Background3DCanvas";
 import { UserSession } from "@/lib/types";
@@ -147,24 +146,6 @@ export const NavbarSidebar: React.FC<NavbarSidebarProps> = ({ userData, onOpenAu
                 >
                   <LogOut size={14} />
                   <span>Sign Out</span>
-                </button>
-                <button
-                  onClick={() => {
-                    if (window.confirm("Format local credentials DB? This clears all registered users and active sessions.")) {
-                      try {
-                        localStorage.removeItem("ai_career_mentor_db_users");
-                        localStorage.removeItem("ai_career_mentor_active_user");
-                        localStorage.removeItem("ai_career_mentor_jwt_token");
-                        window.location.reload();
-                      } catch (err) {
-                        console.warn("Failed to clear local database", err);
-                      }
-                    }
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-[10px] font-semibold text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all cursor-pointer uppercase tracking-wider border-t border-slate-800/60 mt-1 pt-2"
-                >
-                  <Trash2 size={13} />
-                  <span>Format Credentials DB</span>
                 </button>
               </div>
             )}

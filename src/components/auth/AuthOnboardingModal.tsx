@@ -69,7 +69,6 @@ export const AuthOnboardingModal: React.FC<AuthModalProps> = ({
   // Forgot Password State
   const [forgotMethod, setForgotMethod] = useState<"otp" | "link">("otp");
   const [forgotOtpSent, setForgotOtpSent] = useState(false);
-  const [forgotOtpCode, setForgotOtpCode] = useState("");
   const [resetSuccess, setResetSuccess] = useState(false);
   const [enteredResetOtp, setEnteredResetOtp] = useState("");
 
@@ -189,7 +188,6 @@ export const AuthOnboardingModal: React.FC<AuthModalProps> = ({
         method: "POST",
         body: JSON.stringify({ email, purpose: "password_reset" })
       });
-      setForgotOtpCode("Sent");
       setForgotOtpSent(true);
     } catch (err) {
       const error = err as Error;
@@ -238,11 +236,11 @@ export const AuthOnboardingModal: React.FC<AuthModalProps> = ({
     setLoading(true);
     try {
       if (activeTab === "login") {
-        const response = await apiFetch<{ access_token: string; user: UserSession }>("/auth/login", {
+        const response = await apiFetch<{ accessToken: string; user: UserSession }>("/auth/login", {
           method: "POST",
           body: JSON.stringify({ email: cleanEmail, password })
         });
-        setAuthToken(response.access_token);
+        setAuthToken(response.accessToken);
         try {
           localStorage.setItem("ai_career_mentor_active_user", JSON.stringify(response.user));
         } catch {}
@@ -261,7 +259,7 @@ export const AuthOnboardingModal: React.FC<AuthModalProps> = ({
           }
           setSignupStep(2);
         } else {
-          const response = await apiFetch<{ access_token: string; user: UserSession }>("/auth/signup", {
+          const response = await apiFetch<{ accessToken: string; user: UserSession }>("/auth/signup", {
             method: "POST",
             body: JSON.stringify({
               full_name: fullName.trim(),
@@ -277,7 +275,7 @@ export const AuthOnboardingModal: React.FC<AuthModalProps> = ({
               study_time_of_day: studyTimeOfDay
             })
           });
-          setAuthToken(response.access_token);
+          setAuthToken(response.accessToken);
           try {
             localStorage.setItem("ai_career_mentor_active_user", JSON.stringify(response.user));
           } catch {}
@@ -384,7 +382,13 @@ export const AuthOnboardingModal: React.FC<AuthModalProps> = ({
             {/* Tab Switcher */}
             <div className="flex bg-slate-950 p-1 rounded-2xl border border-slate-800 text-xs font-semibold">
               <button
-                onClick={() => { setActiveTab("login"); setErrorMsg(null); }}
+                onClick={() => { 
+                  setActiveTab("login"); 
+                  setErrorMsg(null); 
+                  setEmail(""); 
+                  setPassword(""); 
+                  setIsEmailVerified(false); 
+                }}
                 className={`flex-1 py-2.5 rounded-xl transition-all cursor-pointer ${
                   activeTab === "login" 
                     ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md" 
@@ -394,7 +398,16 @@ export const AuthOnboardingModal: React.FC<AuthModalProps> = ({
                 Log In
               </button>
               <button
-                onClick={() => { setActiveTab("signup"); setSignupStep(1); setErrorMsg(null); }}
+                onClick={() => { 
+                  setActiveTab("signup"); 
+                  setSignupStep(1); 
+                  setErrorMsg(null); 
+                  setEmail(""); 
+                  setFullName(""); 
+                  setPassword(""); 
+                  setIsEmailVerified(false); 
+                  setOtpSent(false); 
+                }}
                 className={`flex-1 py-2.5 rounded-xl transition-all cursor-pointer ${
                   activeTab === "signup" 
                     ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md" 
@@ -404,7 +417,13 @@ export const AuthOnboardingModal: React.FC<AuthModalProps> = ({
                 Sign Up / Onboarding
               </button>
               <button
-                onClick={() => { setActiveTab("edit_profile"); setErrorMsg(null); }}
+                onClick={() => { 
+                  setActiveTab("edit_profile"); 
+                  setErrorMsg(null); 
+                  setEmail(userData?.email || ""); 
+                  setFullName(userData?.fullName || ""); 
+                  setIsEmailVerified(true); 
+                }}
                 className={`flex-1 py-2.5 rounded-xl transition-all cursor-pointer ${
                   activeTab === "edit_profile" 
                     ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md" 
@@ -717,16 +736,16 @@ export const AuthOnboardingModal: React.FC<AuthModalProps> = ({
                       <div className="p-4 rounded-xl bg-slate-950 border border-violet-500/30 space-y-3">
                         <div className="flex justify-between items-center text-xs">
                           <span className="text-slate-300 font-medium flex items-center gap-1">
-                            <KeyRound size={13} className="text-amber-400" /> Enter 4-Digit Reset OTP
+                            <KeyRound size={13} className="text-amber-400" /> Enter 6-Digit Reset OTP
                           </span>
-                          <span className="text-[10px] text-violet-300 font-mono">OTP Sent (Test Code: {forgotOtpCode})</span>
+                          <span className="text-[10px] text-violet-300 font-mono">Verification code dispatched</span>
                         </div>
                         <input 
                           type="text"
                           value={enteredResetOtp}
                           onChange={(e) => setEnteredResetOtp(e.target.value)}
-                          placeholder="Enter 4-digit OTP"
-                          maxLength={4}
+                          placeholder="Enter 6-digit OTP"
+                          maxLength={6}
                           className="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white tracking-widest font-mono text-center focus:outline-none focus:border-violet-500"
                         />
                         <button
@@ -872,7 +891,7 @@ export const AuthOnboardingModal: React.FC<AuthModalProps> = ({
                       <span className="text-slate-300 font-medium flex items-center gap-1">
                         <KeyRound size={13} className="text-amber-400" /> Enter 6-Digit Code
                       </span>
-                      <span className="text-[10px] text-violet-300 font-mono">OTP Sent (Test Code: {generatedOtp || "123456"})</span>
+                      <span className="text-[10px] text-violet-300 font-mono">Verification code dispatched</span>
                     </div>
                     <div className="flex gap-2">
                       <input 

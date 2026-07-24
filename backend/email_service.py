@@ -1,6 +1,7 @@
 import os
 import json
 import urllib.request
+import datetime
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -17,14 +18,26 @@ SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USERNAME = os.getenv("SMTP_USERNAME")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 
+def is_placeholder(val: str) -> bool:
+    if not val:
+        return True
+    val_lower = val.lower().strip()
+    return any(p in val_lower for p in (
+        "placeholder", "your_", "xxxx", "myrealemail", "your_email", 
+        "your_app_password", "re_your_api_key_here", "your_actual_16_letter_code_here"
+    ))
+
 def send_email(to_email: str, subject: str, body_html: str) -> bool:
     print(f"--- OUTGOING EMAIL ---")
     print(f"To: {to_email}")
     print(f"Subject: {subject}")
     print(f"----------------------")
 
-    # 1. Try Resend Service if API Key is configured
-    if RESEND_API_KEY:
+    resend_api_key_valid = RESEND_API_KEY and not is_placeholder(RESEND_API_KEY)
+    smtp_server_valid = SMTP_SERVER and not is_placeholder(SMTP_SERVER) and not is_placeholder(SMTP_USERNAME) and not is_placeholder(SMTP_PASSWORD)
+
+    # 1. Try Resend Service if API Key is configured and valid
+    if resend_api_key_valid:
         try:
             url = "https://api.resend.com/emails"
             headers = {
@@ -48,8 +61,8 @@ def send_email(to_email: str, subject: str, body_html: str) -> bool:
         except Exception as e:
             print(f"Resend dispatch failed, falling back. Error: {e}")
 
-    # 2. Try SMTP Service if server is configured
-    if SMTP_SERVER:
+    # 2. Try SMTP Service if server is configured and valid
+    if smtp_server_valid:
         try:
             msg = MIMEMultipart("alternative")
             msg["Subject"] = subject
@@ -70,10 +83,13 @@ def send_email(to_email: str, subject: str, body_html: str) -> bool:
             print(f"SMTP dispatch failed, falling back. Error: {e}")
 
     # 3. Fallback to Local Sandbox Console Logging
-    print("DEMO MODE FALLBACK: Credentials not fully configured. Outputting code to standard output:")
-    print(f"HTML Body Content:\n{body_html}")
-    print(f"----------------------")
-    return True
+    if not resend_api_key_valid and not smtp_server_valid:
+        print("DEMO MODE FALLBACK: Credentials not fully configured. Outputting code to standard output:")
+        print(f"HTML Body Content:\n{body_html}")
+        print(f"----------------------")
+        return True
+        
+    return False
 
 def send_otp_email(to_email: str, code: str, purpose: str) -> bool:
     purpose_labels = {
@@ -110,8 +126,4 @@ def send_otp_email(to_email: str, code: str, purpose: str) -> bool:
     </body>
     </html>
     """
-    # Replace datetime import with local import if needed
-    import datetime
-    body_html = body_html.replace("{datetime.datetime.utcnow().year}", str(datetime.datetime.utcnow().year))
-    
     return send_email(to_email, subject, body_html)
